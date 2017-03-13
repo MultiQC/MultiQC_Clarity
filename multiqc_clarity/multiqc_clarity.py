@@ -37,6 +37,7 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
         self.get_metadata('Clarity Tab')
         self.update_multiqc_report()
         self.make_sections()
+        report.modules_output.append(self)
 
 
     def get_samples(self):
@@ -192,10 +193,20 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
         headers = OrderedDict()
         for first_level in self.tab_metadata:
             for header in self.tab_metadata[first_level]:
+                desc = header
                 if header not in headers:
+                    for key in self.schema['Clarity Tab']:
+                        if header in self.schema['Clarity Tab'][key]:
+                            desc = key
+                        elif isinstance(self.schema['Clarity Tab'][key], dict):
+                            for subkey in self.schema['Clarity Tab'][key]:
+                                if header in self.schema['Clarity Tab'][key][subkey]:
+                                    desc = key
+
                     headers[header] = {
+                        'namespace' : desc,
                         'title' : header,
-                        'description' : first_level
+                        'description' : header
                         }
         self.sections.append({
             'name': 'Clarity Data',
