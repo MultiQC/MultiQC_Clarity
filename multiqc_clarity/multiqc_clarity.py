@@ -13,6 +13,11 @@ import yaml
 
 class MultiQC_clarity_metadata(BaseMultiqcModule):
     def __init__(self):
+
+        super(MultiQC_clarity_metadata, self).__init__(name='Clarity', anchor='clarity',
+        href='https://github.com/Galithil/MultiQC_Clarity',
+        info="fetches data from your Basespace Clarity LIMS instance.")
+
         self.conf_file = config.kwargs['clarity_config']
         self.lims = Lims(BASEURI, USERNAME, PASSWORD)
         self.log = logging.getLogger('multiqc')
