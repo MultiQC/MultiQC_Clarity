@@ -40,9 +40,9 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
             return None
 
         self.get_samples()
-        self.get_metadata('Header')
-        self.get_metadata('General Statistics')
-        self.get_metadata('Clarity Tab')
+        self.get_metadata('report_header_info')
+        self.get_metadata('general_stats')
+        self.get_metadata('clarity_module')
         self.update_multiqc_report()
         self.make_sections()
         report.modules_output.append(self)
@@ -141,9 +141,9 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
             else:
                 metadata = self.get_artifact_metadata(self.schema[part])
 
-            if part == "Header":
+            if part == "report_header_info":
                 self.header_metadata.update(metadata)
-            elif part == "General Statistics":
+            elif part == "general_stats":
                 self.general_metadata.update(metadata)
             else:
                 self.tab_metadata.update(metadata)
@@ -192,8 +192,8 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
             config.report_header_info.append(d)
 
         headers = {}
-        for first_level in self.schema["General Statistics"]:
-            for header in self.schema["General Statistics"][first_level]:
+        for first_level in self.schema["general_stats"]:
+            for header in self.schema["general_stats"][first_level]:
                 headers[header]= {'description': first_level,
                                                'namespace': 'Clarity',
                                                'scale': 'YlGn'}
@@ -207,12 +207,12 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
             for header in self.tab_metadata[first_level]:
                 desc = header
                 if header not in headers:
-                    for key in self.schema['Clarity Tab']:
-                        if header in self.schema['Clarity Tab'][key]:
+                    for key in self.schema['clarity_module']:
+                        if header in self.schema['clarity_module'][key]:
                             desc = key
-                        elif isinstance(self.schema['Clarity Tab'][key], dict):
-                            for subkey in self.schema['Clarity Tab'][key]:
-                                if header in self.schema['Clarity Tab'][key][subkey]:
+                        elif isinstance(self.schema['clarity_module'][key], dict):
+                            for subkey in self.schema['clarity_module'][key]:
+                                if header in self.schema['clarity_module'][key][subkey]:
                                     desc = key
 
                     headers[header] = {

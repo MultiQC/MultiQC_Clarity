@@ -1,0 +1,28 @@
+'clarity':
+    'report_header_info':
+        'Project':
+            - 'Sequencing platform'
+            - 'Order received'
+
+    'general_stats':
+        'Sample':
+            - 'Customer Name'
+            - 'Customer Conc'
+
+
+    'clarity_module':
+        'Sample':
+            - 'Customer Name'
+            - 'Customer Conc'
+
+        'Aggregate QC (Library Validation) 4.0':
+            inputs:
+                - 'Concentration'
+                - 'Size (bp)'
+                - 'Volume (ul)'
+
+        'Bcl Conversion & Demultiplexing (Illumina SBS) 4.0':
+            outputs:
+                - '# Reads'
+                - '% Bases >=Q30'
+
