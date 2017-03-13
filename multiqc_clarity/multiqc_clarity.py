@@ -9,10 +9,18 @@ from multiqc.plots import table
 from collections import OrderedDict
 import logging
 
-log = logging.getLogger('multiqc')
-
 class MultiQC_clarity_metadata(BaseMultiqcModule):
     def __init__(self):
+
+        self.log = logging.getLogger('multiqc')
+
+        # Check that this plugin hasn't been disabled
+        if config.kwargs.get('disable_clarity', False) is True:
+            self.log.info("Skipping MultiQC_Clarity as disabled on command line")
+            return None
+        if getattr(config, 'disable_clarity', False) is True:
+            self.log.debug("Skipping MultiQC_Clarity as specified in config file")
+            return None
 
         super(MultiQC_clarity_metadata, self).__init__(name='Clarity', anchor='clarity',
         href='https://github.com/Galithil/MultiQC_Clarity',
@@ -28,7 +36,7 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
 
         self.schema = getattr(config, 'clarity', None)
         if self.schema is None:
-            log.warn("No config found for MultiQC_Clarity")
+            self.log.warn("No config found for MultiQC_Clarity")
             return None
 
         self.get_samples()
@@ -56,23 +64,23 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
             if not config.kwargs.get('clarity_skip_edit_names'):
                 names = self.edit_names(names)
 
-            log.debug("Looking into Clarity for samples {}".format(", ".join(names)))
+            self.log.debug("Looking into Clarity for samples {}".format(", ".join(names)))
             found = 0
             try:
                 for name in names:
                     matching_samples = self.lims.get_samples(name=name)
                     if not matching_samples:
-                        log.error("Could not find a sample matching {0}, skipping.".format(name))
+                        self.log.error("Could not find a sample matching {0}, skipping.".format(name))
                         continue
                     if len(matching_samples) > 1:
-                        log.error("Found multiple samples matching {0}, skipping".format(name))
+                        self.log.error("Found multiple samples matching {0}, skipping".format(name))
                         continue
                     found += 1
                     self.samples.append(matching_samples[0])
             except Exception as e:
-                log.warn("Could not connect to Clarity LIMS: {}".format(e))
+                self.log.warn("Could not connect to Clarity LIMS: {}".format(e))
                 return None
-        log.info("Found {} out of {} samples in LIMS.".format(found, len(names)))
+        self.log.info("Found {} out of {} samples in LIMS.".format(found, len(names)))
 
 
     def edit_names(self, names):
