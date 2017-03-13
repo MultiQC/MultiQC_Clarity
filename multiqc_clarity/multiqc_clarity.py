@@ -1,15 +1,15 @@
 
-from genologics.lims import *
+from genologics.lims import Lims
 from genologics.config import BASEURI, USERNAME, PASSWORD
 
-from multiqc.utils import report, util_functions, config
+from multiqc.utils import report, config
 from multiqc.modules.base_module import BaseMultiqcModule
 from multiqc.plots import table
 
 from collections import OrderedDict
-
 import logging
-import yaml
+
+log = logging.getLogger('multiqc')
 
 class MultiQC_clarity_metadata(BaseMultiqcModule):
     def __init__(self):
@@ -18,9 +18,7 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
         href='https://github.com/Galithil/MultiQC_Clarity',
         info="fetches data from your Basespace Clarity LIMS instance.")
 
-        self.conf_file = config.kwargs['clarity_config']
         self.lims = Lims(BASEURI, USERNAME, PASSWORD)
-        self.log = logging.getLogger('multiqc')
         self.metadata = {}
         self.header_metadata = {}
         self.general_metadata = {}
@@ -28,8 +26,10 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
         self.samples = []
         self.sections = []
 
-        with open(config.kwargs['clarity_config']) as cf:
-            self.schema = yaml.load(cf)
+        self.schema = getattr(config, 'clarity', None)
+        if self.schema is None:
+            log.warn("No config found for MultiQC_Clarity")
+            return None
 
         self.get_samples()
         self.get_metadata('Header')
@@ -56,19 +56,23 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
             if not config.kwargs.get('clarity_skip_edit_names'):
                 names = self.edit_names(names)
 
-            self.log.info("Looking into Clarity for samples {}".format(", ".join(names)))
+            log.debug("Looking into Clarity for samples {}".format(", ".join(names)))
             found = 0
-            for name in names:
-                matching_samples = self.lims.get_samples(name=name)
-                if not matching_samples:
-                    self.log.error("Could not find a sample matching {0}, skipping.".format(name))
-                    continue
-                if len(matching_samples) > 1:
-                    self.log.error("Found multiple samples matching {0}, skipping".format(name))
-                    continue
-                found += 1
-                self.samples.append(matching_samples[0])
-        self.log.info("Found {} samples out of {}.".format(found, len(names)))
+            try:
+                for name in names:
+                    matching_samples = self.lims.get_samples(name=name)
+                    if not matching_samples:
+                        log.error("Could not find a sample matching {0}, skipping.".format(name))
+                        continue
+                    if len(matching_samples) > 1:
+                        log.error("Found multiple samples matching {0}, skipping".format(name))
+                        continue
+                    found += 1
+                    self.samples.append(matching_samples[0])
+            except Exception as e:
+                log.warn("Could not connect to Clarity LIMS: {}".format(e))
+                return None
+        log.info("Found {} out of {} samples in LIMS.".format(found, len(names)))
 
 
     def edit_names(self, names):
