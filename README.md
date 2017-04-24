@@ -55,17 +55,17 @@ For example, a basic setup with minimal configuration could be:
 
 ```yaml
 clarity:
-	report_header_info:
-		Project:
-			'custom UDF name':
-			'another custom UDF':
-	general_stats:
-		Sample:
-			'a custom UDF':
-	clarity_module:
-		'custom step name':
-			'inputs':
-				'your UDF name':
+    report_header_info:
+        Project:
+            'custom UDF name':
+            'another custom UDF':
+    general_stats:
+        Sample:
+            'a custom UDF':
+    clarity_module:
+        'custom step name':
+            'inputs':
+                'your UDF name':
 ```
 
 The final level of configuration configures how MultiQC handles the data itself. You can read the main [MultiQC documentation](http://multiqc.info/docs/) for more details, or see the above example for more information.
