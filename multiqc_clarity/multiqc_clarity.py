@@ -37,7 +37,7 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
 
         self.schema = getattr(config, 'clarity', None)
         if self.schema is None:
-            self.log.warn("No config found for MultiQC_Clarity")
+            self.log.debug("No config found for MultiQC_Clarity")
             return None
 
         self.get_samples()
