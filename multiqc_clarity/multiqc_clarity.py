@@ -22,9 +22,11 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
             self.log.debug("Skipping MultiQC_Clarity as specified in config file")
             return None
 
-        super(MultiQC_clarity_metadata, self).__init__(name='Clarity', anchor='clarity',
-        href='https://github.com/Galithil/MultiQC_Clarity',
-        info="fetches data from your Basespace Clarity LIMS instance.")
+        super(MultiQC_clarity_metadata, self).__init__(name='Clarity LIMS', anchor='clarity')
+
+        self.intro = '''<p>The <a href="https://github.com/MultiQC/MultiQC_Clarity" target="_blank">MultiQC_Clarity</a>
+            plugin fetches data from a specified
+            <a href="https://www.genologics.com/clarity-lims/" target="_blank">Basespace Clarity LIMS</a> instance.</p>'''
 
         self.lims = Lims(BASEURI, USERNAME, PASSWORD)
         self.metadata = {}
@@ -32,7 +34,6 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
         self.general_metadata = {}
         self.tab_metadata = {}
         self.samples = []
-        self.sections = []
 
         self.schema = getattr(config, 'clarity', None)
         if self.schema is None:
@@ -40,9 +41,9 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
             return None
 
         self.get_samples()
-        self.get_metadata('Header')
-        self.get_metadata('General Statistics')
-        self.get_metadata('Clarity Tab')
+        self.get_metadata('report_header_info')
+        self.get_metadata('general_stats')
+        self.get_metadata('clarity_module')
         self.update_multiqc_report()
         self.make_sections()
         report.modules_output.append(self)
@@ -141,9 +142,9 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
             else:
                 metadata = self.get_artifact_metadata(self.schema[part])
 
-            if part == "Header":
+            if part == "report_header_info":
                 self.header_metadata.update(metadata)
-            elif part == "General Statistics":
+            elif part == "general_stats":
                 self.general_metadata.update(metadata)
             else:
                 self.tab_metadata.update(metadata)
@@ -192,11 +193,19 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
             config.report_header_info.append(d)
 
         headers = {}
-        for first_level in self.schema["General Statistics"]:
-            for header in self.schema["General Statistics"][first_level]:
-                headers[header]= {'description': first_level,
-                                               'namespace': 'Clarity',
-                                               'scale': 'YlGn'}
+        for first_level in self.schema["general_stats"]:
+            for header in self.schema["general_stats"][first_level]:
+                headers[header] = {}
+                if isinstance(self.schema["general_stats"][first_level][header], dict):
+                    for subsubkey, cfg in self.schema["general_stats"][first_level][header].items():
+                        if subsubkey == 'multiply_by':
+                            mby = str(cfg)[:]
+                            headers[header]['modify'] = lambda x: float(x) * float(mby)
+                        else:
+                            headers[header][subsubkey] = cfg
+                headers[header]['description'] = headers[header].get('description', '{} - {}'.format(first_level, header))
+                headers[header]['namespace'] = headers[header].get('namespace', 'Clarity LIMS')
+                headers[header]['scale'] = headers[header].get('scale', 'YlGn')
 
         report.general_stats_headers.append(headers)
         report.general_stats_data.append(self.general_metadata)
@@ -207,24 +216,29 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
             for header in self.tab_metadata[first_level]:
                 desc = header
                 if header not in headers:
-                    for key in self.schema['Clarity Tab']:
-                        if header in self.schema['Clarity Tab'][key]:
+                    headers[header] = {}
+                    for key in self.schema['clarity_module']:
+                        if header in self.schema['clarity_module'][key]:
                             desc = key
-                        elif isinstance(self.schema['Clarity Tab'][key], dict):
-                            for subkey in self.schema['Clarity Tab'][key]:
-                                if header in self.schema['Clarity Tab'][key][subkey]:
+                        elif isinstance(self.schema['clarity_module'][key], dict):
+                            for subkey, val in self.schema['clarity_module'][key].items():
+                                # print(val)
+                                if val is None:
+                                    break
+                                elif header in val:
                                     desc = key
+                                    if isinstance(val[header], dict):
+                                        for subsubkey, cfg in val[header].items():
+                                            if subsubkey == 'multiply_by':
+                                                mby = str(cfg)[:]
+                                                headers[header]['modify'] = lambda x: float(x) * float(mby)
+                                            else:
+                                                headers[header][subsubkey] = cfg
 
-                    headers[header] = {
-                        'namespace' : desc,
-                        'title' : header,
-                        'description' : header
-                        }
-        self.sections.append({
-            'name': 'Clarity Data',
-            'anchor': 'clarity_data',
-            'content': '<p> Data obtained from Illumina Basespace Clarity LIMS.</p>' +
-                        table.plot(self.tab_metadata, headers)
-        })
+                    headers[header]['namespace'] = headers[header].get('namespace', desc)
+                    headers[header]['title'] = headers[header].get('title', header)
+                    headers[header]['description'] = headers[header].get('description', header)
+
+        self.intro += table.plot(self.tab_metadata, headers)
 
 
