@@ -1,4 +1,6 @@
 clarity:
+    name_edit_regex: '^(.*)_L\d{3}_R\d_001$'
+
     report_header_info:
         Project:
             'Sequencing platform':

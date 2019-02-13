@@ -34,7 +34,8 @@ setup(
         'multiqc.cli_options.v1': [
                         'disable_clarity = multiqc_clarity.cli:c_disable',
                         'clarity_skip_edit_snames = multiqc_clarity.cli:c_edit_patterns',
-                        'clarity_project_name = multiqc_clarity.cli:c_pname'
+                        'clarity_project_name = multiqc_clarity.cli:c_pname',
+                        'clarity_name_edit_from_config = multiqc_clarity.cli:c_edit_name_with_regex'
                         ]
     },
     classifiers = [

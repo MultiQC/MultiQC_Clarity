@@ -8,6 +8,7 @@ from multiqc.plots import table
 
 from collections import OrderedDict
 import logging
+import re
 
 class MultiQC_clarity_metadata(BaseMultiqcModule):
     def __init__(self):
@@ -33,6 +34,7 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
         self.header_metadata = {}
         self.general_metadata = {}
         self.tab_metadata = {}
+        self.name_edit_regex = None
         self.samples = []
 
         self.schema = getattr(config, 'clarity', None)
@@ -40,6 +42,7 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
             self.log.debug("No config found for MultiQC_Clarity")
             return None
 
+        self.get_metadata('name_edit_regex')
         self.get_samples()
         self.get_metadata('report_header_info')
         self.get_metadata('general_stats')
@@ -85,6 +88,9 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
 
 
     def edit_names(self, names):
+        if config.kwargs.get('clarity_name_edit_from_config'):
+            return self.edit_names_with_regex(names)
+
         edited=[]
         for name in names:
             if name.endswith("_1") or name.endswith("_2"):
@@ -94,6 +100,13 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
             else:
                 edited.append(name)
 
+        return edited
+
+    def edit_names_with_regex(self, names):
+        edited = []
+        for name in names:
+            matches = re.search(re.compile(self.name_edit_regex), name)
+            edited.append(matches.group(1))
         return edited
 
     def flatten_metadata(self, metadata):
@@ -146,6 +159,8 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
                 self.header_metadata.update(metadata)
             elif part == "general_stats":
                 self.general_metadata.update(metadata)
+            elif part == "name_edit_regex":
+                self.name_edit_regex = self.schema[part]
             else:
                 self.tab_metadata.update(metadata)
 
