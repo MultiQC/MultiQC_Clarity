@@ -53,9 +53,14 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
 
 
     def get_samples(self):
-        if config.kwargs.get('clarity_project_name'):
-            pj = self.lims.get_projects(name=config.kwargs['clarity_project_name'])
-            self.samples = pj.samples
+        if config.kwargs.get('clarity_project'):
+            pj = self.lims.get_projects(name=config.kwargs['clarity_project'])
+            if len(pj) > 1:
+                self.log.error("Found multiple match projects in Clarity.")
+            elif len(pj) < 1:
+                self.log.error("Could not identify project in Clarity.")
+            else:
+                self.samples = self.lims.get_samples(projectlimsid=pj[0].id)
         else:
             names = set()
             for x in report.general_stats_data:
@@ -68,7 +73,7 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
             if not config.kwargs.get('clarity_skip_edit_names'):
                 names = self.edit_names(names)
 
-            self.log.debug("Looking into Clarity for samples {}".format(", ".join(names)))
+            self.log.info("Looking into Clarity for samples {}".format(", ".join(names)))
             found = 0
             try:
                 for name in names:
@@ -84,7 +89,7 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
             except Exception as e:
                 self.log.warn("Could not connect to Clarity LIMS: {}".format(e))
                 return None
-        self.log.info("Found {} out of {} samples in LIMS.".format(found, len(names)))
+            self.log.info("Found {} out of {} samples in LIMS.".format(found, len(names)))
 
 
     def edit_names(self, names):
