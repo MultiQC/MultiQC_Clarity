@@ -8,6 +8,7 @@ from multiqc.plots import table
 
 from collections import OrderedDict
 import logging
+import re
 
 class MultiQC_clarity_metadata(BaseMultiqcModule):
     def __init__(self):
@@ -40,6 +41,8 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
             self.log.debug("No config found for MultiQC_Clarity")
             return None
 
+        self.name_edit_regex = self.schema.get("name_edit_regex")
+
         self.get_samples()
         self.get_metadata('report_header_info')
         self.get_metadata('general_stats')
@@ -50,9 +53,14 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
 
 
     def get_samples(self):
-        if config.kwargs.get('clarity_project_name'):
-            pj = self.lims.get_projects(name=config.kwargs['clarity_project_name'])
-            self.samples = pj.samples
+        if config.kwargs.get('clarity_project'):
+            pj = self.lims.get_projects(name=config.kwargs['clarity_project'])
+            if len(pj) > 1:
+                self.log.error("Found multiple match projects in Clarity.")
+            elif len(pj) < 1:
+                self.log.error("Could not identify project in Clarity.")
+            else:
+                self.samples = self.lims.get_samples(projectlimsid=pj[0].id)
         else:
             names = set()
             for x in report.general_stats_data:
@@ -65,7 +73,7 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
             if not config.kwargs.get('clarity_skip_edit_names'):
                 names = self.edit_names(names)
 
-            self.log.debug("Looking into Clarity for samples {}".format(", ".join(names)))
+            self.log.info("Looking into Clarity for samples {}".format(", ".join(names)))
             found = 0
             try:
                 for name in names:
@@ -81,10 +89,13 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
             except Exception as e:
                 self.log.warn("Could not connect to Clarity LIMS: {}".format(e))
                 return None
-        self.log.info("Found {} out of {} samples in LIMS.".format(found, len(names)))
+            self.log.info("Found {} out of {} samples in LIMS.".format(found, len(names)))
 
 
     def edit_names(self, names):
+        if self.name_edit_regex:
+            return self.edit_names_with_regex(names)
+
         edited=[]
         for name in names:
             if name.endswith("_1") or name.endswith("_2"):
@@ -94,6 +105,13 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
             else:
                 edited.append(name)
 
+        return edited
+
+    def edit_names_with_regex(self, names):
+        edited = []
+        for name in names:
+            matches = re.search(re.compile(self.name_edit_regex), name)
+            edited.append(matches.group(1))
         return edited
 
     def flatten_metadata(self, metadata):
