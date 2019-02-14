@@ -41,10 +41,7 @@ class MultiQC_clarity_metadata(BaseMultiqcModule):
             self.log.debug("No config found for MultiQC_Clarity")
             return None
 
-        if self.schema.get("name_edit_regex"):
-            self.name_edit_regex = self.schema.get("name_edit_regex")
-        else:
-            self.name_edit_regex = None
+        self.name_edit_regex = self.schema.get("name_edit_regex")
 
         self.get_samples()
         self.get_metadata('report_header_info')
