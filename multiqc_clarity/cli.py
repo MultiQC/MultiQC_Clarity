@@ -18,8 +18,3 @@ c_edit_patterns = click.option('--clarity_skip_name_editing',
     default = False,
     help = "Do not edit the sample names to remove suffixes like _1, _2, _R1, _R2."
 )
-c_edit_name_with_regex = click.option('--clarity_name_edit_from_config',
-    is_flag = True,
-    default = False,
-    help = "Edit sample names using regex specified in config."
-)

@@ -1,5 +1,8 @@
 clarity:
-    name_edit_regex: '^(.*)_L\d{3}_R\d_001$'
+    # Uncomment this edit the sample names using a regex.
+    # It is assumed that the first match group contains the
+    # sample name
+    #name_edit_regex: '^(.*)_L\d{3}_R\d_001$'
 
     report_header_info:
         Project:
